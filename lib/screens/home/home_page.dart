@@ -8,7 +8,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text('Home'),
+        title: const Text('Home'),
       ),
       body: GridView.count(
         // Create a grid with 2 columns. If you change the scrollDirection to
@@ -18,7 +18,7 @@ class HomePage extends StatelessWidget {
           Card(
             child: InkWell(
               onTap: () => Navigator.of(context).push(BmiPage.route()),
-              child: Center(
+              child: const Center(
                 child: Text(
                   'BMI',
                 ),
@@ -28,7 +28,7 @@ class HomePage extends StatelessWidget {
           Card(
             child: InkWell(
               onTap: () => Navigator.of(context).push(Calculator.route()),
-              child: Center(
+              child: const Center(
                 child: Text(
                   'Calculator',
                 ),

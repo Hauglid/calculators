@@ -12,9 +12,9 @@ class Calculator extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text('Calculator'),
+          title: const Text('Calculator'),
         ),
-        body: Center(
+        body: const Center(
           child: Text('Calculator'),
         ));
   }
