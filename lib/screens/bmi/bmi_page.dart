@@ -12,9 +12,9 @@ class BmiPage extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text('BMI'),
+          title: const Text('BMI'),
         ),
-        body: Center(
+        body: const Center(
           child: Text('BMI'),
         ));
   }
