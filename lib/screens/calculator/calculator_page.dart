@@ -60,30 +60,30 @@ class _CalculatorState extends State<Calculator> {
                     _buildRow([
                       _buildACButton(),
                       _buildInvertButton(),
-                      _buildButton(value: '%'),
-                      _buildButton(value: '/'),
+                      _buildNumberButton(value: '%'),
+                      _buildNumberButton(value: '/'),
                     ]),
                     _buildRow([
-                      _buildButton(value: '7'),
-                      _buildButton(value: '8'),
-                      _buildButton(value: '9'),
-                      _buildButton(value: '*'),
+                      _buildNumberButton(value: '7'),
+                      _buildNumberButton(value: '8'),
+                      _buildNumberButton(value: '9'),
+                      _buildNumberButton(value: '*'),
                     ]),
                     _buildRow([
-                      _buildButton(value: '4'),
-                      _buildButton(value: '5'),
-                      _buildButton(value: '6'),
-                      _buildButton(value: '-'),
+                      _buildNumberButton(value: '4'),
+                      _buildNumberButton(value: '5'),
+                      _buildNumberButton(value: '6'),
+                      _buildNumberButton(value: '-'),
                     ]),
                     _buildRow([
-                      _buildButton(value: '1'),
-                      _buildButton(value: '2'),
-                      _buildButton(value: '4'),
-                      _buildButton(value: '+'),
+                      _buildNumberButton(value: '1'),
+                      _buildNumberButton(value: '2'),
+                      _buildNumberButton(value: '4'),
+                      _buildNumberButton(value: '+'),
                     ]),
                     _buildRow([
-                      _buildButton(value: '0', flex: 2),
-                      _buildButton(value: '.'),
+                      _buildNumberButton(value: '0', flex: 2),
+                      _buildNumberButton(value: '.'),
                       _buildEqualsButton(),
                     ]),
                   ],
@@ -94,69 +94,67 @@ class _CalculatorState extends State<Calculator> {
         ));
   }
 
-  Widget _buildButton({String value, int flex = 1}) {
-    return Expanded(
-      flex: flex,
-      child: OutlineButton(
-        onPressed: () {
-          setState(() {
-            if (value.contains(RegExp(r'[1-9]'))) {
-              input = value;
-            }
-            expression = expression + value;
-          });
-        },
-        child: _buildButtonText(value),
-      ),
-    );
+  Widget _buildNumberButton({String value, int flex = 1}) {
+    final Function onPressed = () {
+      setState(() {
+        if (value.contains(RegExp(r'[1-9]'))) {
+          input = value;
+        }
+        expression = expression + value;
+      });
+    };
+    return _buildButton(buttonText: value, onPressed: onPressed, flex: flex);
   }
 
   Widget _buildInvertButton() {
-    return Expanded(
-      child: OutlineButton(
-        onPressed: () {
-          final Expression exp = Parser().parse(input + '*-1');
-          final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
-          setState(() {
-            input = eval.toString();
-          });
-        },
-        child: _buildButtonText('+/-'),
-      ),
-    );
+    final Function onPressed = () {
+      final Expression exp = Parser().parse(input + '*-1');
+      final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
+      setState(() {
+        input = eval.toString();
+      });
+    };
+
+    return _buildButton(buttonText: '+/-', onPressed: onPressed);
   }
 
   Widget _buildACButton() {
-    return Expanded(
-      child: OutlineButton(
-        onPressed: () {
-          setState(() {
-            expression = '';
-            input = '';
-          });
-        },
-        child: _buildButtonText('AC'),
-      ),
-    );
+    final Function onPressed = () {
+      setState(() {
+        expression = '';
+        input = '';
+      });
+    };
+
+    return _buildButton(buttonText: 'AC', onPressed: onPressed);
   }
 
-  Text _buildButtonText(String textButton) => Text(
-        textButton,
-        style: Theme.of(context).textTheme.headline6,
-      );
-
   Widget _buildEqualsButton() {
+    final Function onPressed = () {
+      final Expression exp = Parser().parse(expression);
+      final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
+      setState(() {
+        expression = '';
+        input = eval.toString();
+      });
+    };
+
+    return _buildButton(buttonText: '=', onPressed: onPressed);
+  }
+
+  Widget _buildButton({
+    @required String buttonText,
+    @required Function onPressed,
+    int flex = 1,
+  }) {
     return Expanded(
+      flex: flex,
       child: OutlineButton(
-        onPressed: () {
-          final Expression exp = Parser().parse(expression);
-          final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
-          setState(() {
-            expression = '';
-            input = eval.toString();
-          });
-        },
-        child: _buildButtonText('='),
+        onPressed: onPressed,
+        child: Text(
+          buttonText,
+          style: Theme.of(context).textTheme.headline6,
+        ),
       ),
     );
   }
