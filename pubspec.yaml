@@ -23,7 +23,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  flutter_bloc: 5.0.1 # Business logic
+  flutter_cubit: 0.1.0
   math_expressions: 2.0.0 # Used to evaluate mathematical strings
 
 dev_dependencies:

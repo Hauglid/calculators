@@ -1,22 +1,15 @@
+import 'package:calculators/screens/calculator/cubit/calculator_cubit.dart';
 import 'package:flutter/material.dart';
-import 'package:math_expressions/math_expressions.dart';
+import 'package:flutter_cubit/flutter_cubit.dart';
 
-class Calculator extends StatefulWidget {
+class Calculator extends StatelessWidget {
   static Route<dynamic> route() {
     return MaterialPageRoute<Widget>(
       builder: (_) => Calculator(),
     );
   }
 
-  @override
-  _CalculatorState createState() => _CalculatorState();
-}
-
-class _CalculatorState extends State<Calculator> {
-  String sumExpression = '';
-  String currentInput = '';
-
-  bool newNumber = false;
+  final _cubit = CalculatorCubit();
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +19,7 @@ class _CalculatorState extends State<Calculator> {
           title: const Text('Calculator'),
         ),
         body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: const [Colors.blue, Color(0xFF6E6DD5)],
-            ),
-          ),
+          decoration: _getBoxDecoration(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -40,17 +27,22 @@ class _CalculatorState extends State<Calculator> {
                 flex: 2,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Text(sumExpression),
-                      Text(
-                        currentInput,
-                        style: Theme.of(context).textTheme.headline3,
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
+                  child: CubitBuilder(
+                    cubit: _cubit,
+                    builder: (context, state) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Text(state.sumExpression),
+                          Text(
+                            state.currentInput,
+                            style: Theme.of(context).textTheme.headline3,
+                            textAlign: TextAlign.right,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -99,97 +91,46 @@ class _CalculatorState extends State<Calculator> {
         ));
   }
 
+  BoxDecoration _getBoxDecoration() {
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: const [Colors.blue, Color(0xFF6E6DD5)],
+      ),
+    );
+  }
+
   Widget _buildArithmicButton({String value}) {
-    final Function onPressed = () {
-      setState(() {
-        if (!sumExpression
-            .substring(sumExpression.length - 1)
-            .contains(RegExp(r'[\+\-\*\/]'))) {
-          sumExpression = sumExpression + value;
-        }
-      });
-      newNumber = true;
-    };
-    return _buildButton(buttonText: value, onPressed: onPressed);
+    return _buildButton(
+        buttonText: value, onPressed: () => _cubit.addArithmeticSign(value));
   }
 
   Widget _buildDotButton() {
-    final Function onPressed = () {
-      setState(() {
-        if (currentInput == '') {
-          currentInput = '0.';
-          sumExpression = currentInput;
-        } else if (!currentInput.contains('.')) {
-          currentInput = currentInput + '.';
-          sumExpression = sumExpression + '.';
-        }
-      });
-    };
-    return _buildButton(buttonText: '.', onPressed: onPressed);
+    return _buildButton(buttonText: '.', onPressed: _cubit.addDecimalDot);
   }
 
   Widget _buildNumberButton({String value, int flex = 1}) {
-    final Function onPressed = () {
-      setState(() {
-        sumExpression = sumExpression + value;
-        if (!newNumber) {
-          currentInput = currentInput + value;
-        } else {
-          currentInput = value;
-          newNumber = false;
-        }
-      });
-    };
-    return _buildButton(buttonText: value, onPressed: onPressed, flex: flex);
+    return _buildButton(
+        buttonText: value,
+        onPressed: () => _cubit.addNumber(value),
+        flex: flex);
   }
 
   Widget _buildInvertButton() {
-    final Function onPressed = () {
-      final Expression exp = Parser().parse(currentInput + '*-1');
-      final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
-      setState(() {
-        currentInput = eval.toString();
-      });
-    };
-
-    return _buildButton(buttonText: '+/-', onPressed: onPressed);
+    return _buildButton(buttonText: '+/-', onPressed: _cubit.invertInput);
   }
 
   Widget _buildPercentButton() {
-    final Function onPressed = () {
-      final Expression exp = Parser().parse(currentInput + '/100');
-      final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
-      setState(() {
-        currentInput = eval.toString();
-        sumExpression = eval.toString();
-      });
-    };
-
-    return _buildButton(buttonText: '%', onPressed: onPressed);
+    return _buildButton(buttonText: '%', onPressed: _cubit.calculatePercent);
   }
 
   Widget _buildACButton() {
-    final Function onPressed = () {
-      setState(() {
-        sumExpression = '';
-        currentInput = '';
-      });
-    };
-
-    return _buildButton(buttonText: 'AC', onPressed: onPressed);
+    return _buildButton(buttonText: 'AC', onPressed: _cubit.clean);
   }
 
   Widget _buildEqualsButton() {
-    final Function onPressed = () {
-      final Expression exp = Parser().parse(sumExpression);
-      final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
-      setState(() {
-        sumExpression = eval.toString();
-        currentInput = eval.toString();
-      });
-    };
-
-    return _buildButton(buttonText: '=', onPressed: onPressed);
+    return _buildButton(buttonText: '=', onPressed: _cubit.calculate);
   }
 
   Widget _buildButton({
@@ -215,7 +156,7 @@ class _CalculatorState extends State<Calculator> {
             onPressed: onPressed,
             child: Text(
               buttonText,
-              style: Theme.of(context).textTheme.headline6,
+              // style: Theme.of(context).textTheme.headline6,
             ),
           ),
         ),
