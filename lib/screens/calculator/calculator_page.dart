@@ -13,8 +13,10 @@ class Calculator extends StatefulWidget {
 }
 
 class _CalculatorState extends State<Calculator> {
-  String expression = '';
-  String input = '';
+  String sumExpression = '';
+  String currentInput = '';
+
+  bool newNumber = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +44,9 @@ class _CalculatorState extends State<Calculator> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Text(expression),
+                      Text(sumExpression),
                       Text(
-                        input,
+                        currentInput,
                         style: Theme.of(context).textTheme.headline3,
                         textAlign: TextAlign.right,
                       ),
@@ -54,39 +56,42 @@ class _CalculatorState extends State<Calculator> {
               ),
               Expanded(
                 flex: 4,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _buildRow([
-                      _buildACButton(),
-                      _buildInvertButton(),
-                      _buildNumberButton(value: '%'),
-                      _buildNumberButton(value: '/'),
-                    ]),
-                    _buildRow([
-                      _buildNumberButton(value: '7'),
-                      _buildNumberButton(value: '8'),
-                      _buildNumberButton(value: '9'),
-                      _buildNumberButton(value: '*'),
-                    ]),
-                    _buildRow([
-                      _buildNumberButton(value: '4'),
-                      _buildNumberButton(value: '5'),
-                      _buildNumberButton(value: '6'),
-                      _buildNumberButton(value: '-'),
-                    ]),
-                    _buildRow([
-                      _buildNumberButton(value: '1'),
-                      _buildNumberButton(value: '2'),
-                      _buildNumberButton(value: '4'),
-                      _buildNumberButton(value: '+'),
-                    ]),
-                    _buildRow([
-                      _buildNumberButton(value: '0', flex: 2),
-                      _buildNumberButton(value: '.'),
-                      _buildEqualsButton(),
-                    ]),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildRow([
+                        _buildACButton(),
+                        _buildInvertButton(),
+                        _buildPercentButton(),
+                        _buildNumberButton(value: '/'),
+                      ]),
+                      _buildRow([
+                        _buildNumberButton(value: '7'),
+                        _buildNumberButton(value: '8'),
+                        _buildNumberButton(value: '9'),
+                        _buildArithmicButton(value: '*'),
+                      ]),
+                      _buildRow([
+                        _buildNumberButton(value: '4'),
+                        _buildNumberButton(value: '5'),
+                        _buildNumberButton(value: '6'),
+                        _buildArithmicButton(value: '-'),
+                      ]),
+                      _buildRow([
+                        _buildNumberButton(value: '1'),
+                        _buildNumberButton(value: '2'),
+                        _buildNumberButton(value: '3'),
+                        _buildArithmicButton(value: '+'),
+                      ]),
+                      _buildRow([
+                        _buildNumberButton(value: '0', flex: 2),
+                        _buildDotButton(),
+                        _buildEqualsButton(),
+                      ]),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -94,13 +99,45 @@ class _CalculatorState extends State<Calculator> {
         ));
   }
 
+  Widget _buildArithmicButton({String value}) {
+    final Function onPressed = () {
+      setState(() {
+        if (!sumExpression
+            .substring(sumExpression.length - 1)
+            .contains(RegExp(r'[\+\-\*\/]'))) {
+          sumExpression = sumExpression + value;
+        }
+      });
+      newNumber = true;
+    };
+    return _buildButton(buttonText: value, onPressed: onPressed);
+  }
+
+  Widget _buildDotButton() {
+    final Function onPressed = () {
+      setState(() {
+        if (currentInput == '') {
+          currentInput = '0.';
+          sumExpression = currentInput;
+        } else if (!currentInput.contains('.')) {
+          currentInput = currentInput + '.';
+          sumExpression = sumExpression + '.';
+        }
+      });
+    };
+    return _buildButton(buttonText: '.', onPressed: onPressed);
+  }
+
   Widget _buildNumberButton({String value, int flex = 1}) {
     final Function onPressed = () {
       setState(() {
-        if (value.contains(RegExp(r'[1-9]'))) {
-          input = value;
+        sumExpression = sumExpression + value;
+        if (!newNumber) {
+          currentInput = currentInput + value;
+        } else {
+          currentInput = value;
+          newNumber = false;
         }
-        expression = expression + value;
       });
     };
     return _buildButton(buttonText: value, onPressed: onPressed, flex: flex);
@@ -108,21 +145,34 @@ class _CalculatorState extends State<Calculator> {
 
   Widget _buildInvertButton() {
     final Function onPressed = () {
-      final Expression exp = Parser().parse(input + '*-1');
+      final Expression exp = Parser().parse(currentInput + '*-1');
       final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
       setState(() {
-        input = eval.toString();
+        currentInput = eval.toString();
       });
     };
 
     return _buildButton(buttonText: '+/-', onPressed: onPressed);
   }
 
+  Widget _buildPercentButton() {
+    final Function onPressed = () {
+      final Expression exp = Parser().parse(currentInput + '/100');
+      final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
+      setState(() {
+        currentInput = eval.toString();
+        sumExpression = eval.toString();
+      });
+    };
+
+    return _buildButton(buttonText: '%', onPressed: onPressed);
+  }
+
   Widget _buildACButton() {
     final Function onPressed = () {
       setState(() {
-        expression = '';
-        input = '';
+        sumExpression = '';
+        currentInput = '';
       });
     };
 
@@ -131,11 +181,11 @@ class _CalculatorState extends State<Calculator> {
 
   Widget _buildEqualsButton() {
     final Function onPressed = () {
-      final Expression exp = Parser().parse(expression);
+      final Expression exp = Parser().parse(sumExpression);
       final double eval = exp.evaluate(EvaluationType.REAL, ContextModel());
       setState(() {
-        expression = '';
-        input = eval.toString();
+        sumExpression = eval.toString();
+        currentInput = eval.toString();
       });
     };
 
@@ -149,11 +199,25 @@ class _CalculatorState extends State<Calculator> {
   }) {
     return Expanded(
       flex: flex,
-      child: OutlineButton(
-        onPressed: onPressed,
-        child: Text(
-          buttonText,
-          style: Theme.of(context).textTheme.headline6,
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Container(
+          width: double.infinity,
+          clipBehavior: Clip.hardEdge,
+          decoration: const ShapeDecoration(
+            shape: StadiumBorder(
+              side: BorderSide(
+                color: Colors.black,
+              ),
+            ),
+          ),
+          child: FlatButton(
+            onPressed: onPressed,
+            child: Text(
+              buttonText,
+              style: Theme.of(context).textTheme.headline6,
+            ),
+          ),
         ),
       ),
     );
